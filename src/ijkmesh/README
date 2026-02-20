@@ -1,0 +1,8 @@
+
+Program for manipulating meshes.
+
+Commands include edit, sort, reverse_orient, merge, subset, and gencube.
+
+Reads meshes in Geomview .off file format.
+Writes meshes in off, ply (3D), fig (2D), or vtk (3D) format.
+

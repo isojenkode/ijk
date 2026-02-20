@@ -1,0 +1,9 @@
+
+Generate regular scalar grid of any dimension and axis size.
+
+Generates scalar grids whose isosurfaces are cubes, spheres, cylinders, cones,
+isosurface lookup table entries, etc.
+
+Also can generate gradient vector fields for many of the scalar fields.
+
+Stores scalar grid and gradient vector fields as Teem nrrd files.

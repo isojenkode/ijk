@@ -1,0 +1,14 @@
+
+Print mesh information.
+
+Print number of vertices, number of polygons, min/max angles, min/max edge lengths
+bounding box, etc.
+
+Can report whether mesh violates manifold conditions and whether mesh self intersects.
+
+Can report information on individual mesh vertices and/or polygons, on all polygons
+containing a vertex or edge, and on polygons with angles less than or greater
+than some value.
+
+Can also produce a histogram file of mesh characterstics such as angle frequencies
+and edge lengths.

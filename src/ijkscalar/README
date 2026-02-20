@@ -1,0 +1,10 @@
+
+Process regular scalar grid.
+
+Input and output are in Teem nrrd format.
+
+Subsample or supersample grid.
+
+Apply operations to a scalar grid such as adding or multiplying all values
+by a scalar, setting all values to a constant, or computing pointwise minimum
+or maximum of two scalar grids.

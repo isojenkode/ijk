@@ -1,0 +1,11 @@
+
+Generate isosurface using Marching Cubes algorithm.
+
+Requires isosurface lookup table (usually stored in ../../isotable).
+
+Can generate isosurfaces in 4D (with appropriate isosurface lookup table.)
+
+Includes options for nep (negative, equals, positive) lookup tables,
+high resolution regions, asymptotic decider, and others.
+Includes octree option for faster isosurface generation with multiple isovalues.
+

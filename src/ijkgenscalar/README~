@@ -1,0 +1,7 @@
+
+Generate regular scalar grid of any dimension and axis size.
+
+Generates scalar grids whose isosurfaces are cubes, spheres, cylinders, cones,
+isosurface lookup table entries, etc.
+
+Stores scalar grid as Teem nrrd file.

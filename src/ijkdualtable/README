@@ -1,0 +1,11 @@
+
+C++ template classes and functions for creating dual contouring lookup tables.
+
+ijkdualtable.tpp - Template classes and functions for creating and storing
+  dual contouring lookup tables.
+
+ijkdualtable_vert.tpp - Template classes and functions for adding isosurface vertex
+  information to dual contouring lookup tables.
+
+ijkdualtableX.tpp - Template classes for computing extra information
+  about isosurface vertices in dual contouring lookup tables.

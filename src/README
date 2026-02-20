@@ -1,0 +1,34 @@
+Isosurface Jeneration Kode programs:
+
+ijkdual: Generate isosurface using Dual Contouring.
+ijkgenscalar: Generate a regular scalar grid (sampling a scalar field).
+ijkisoinfo: Return information about an isosurface in a scalar field.
+            (Does not compute the isosurface, just some characteristics.)
+ijkmcube: Generate isosurface using Marching Cubes.
+ijkmesh: Process a mesh (crop, edit, translate, etc.)
+ijkmeshdiff: Return differences between two meshes.
+ijkmeshinfo: Return information about a mesh (number of vertices/edges/triangles,
+             Maximum/minimum angles, manifold properties, self-intersection, etc.)
+ijkscalar: Process a regular scalar grid (subsample, supersample, negate, etc.)
+           or combine two scalar grids (pointwise max/min of two scalar grids.)
+ijkscalarinfo: Return information about a scalar grid (axis sizes,
+               number of grid vertices/edges/cubes, min/max scalar values, etc.)
+               Also can be used to create histograms of scalar values,
+               isosurface area, total and mean gradients, etc.
+
+Other:
+
+NrrdIO: Copy of teem (sourceforge) code for reading/writing nrrd files.
+        Used to create NrrdIO library, required by many ijk programs.
+ijkMCtable: Code for reading/writing ijk Marching Cubes lookup tables.
+        (Also, programs for viewing such tables.)
+ijkdualtable: Code for reading/writing ijk dual contouring lookup tables.
+        (Also, programs for viewing such tables.)
+
+
+License:   This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public License
+  (LGPL) as published by the Free Software Foundation; either
+  version 3.0 of the License, or any later version.
+
+             

@@ -1,0 +1,7 @@
+
+Compare two meshes.
+Input is in Geomview .off format.
+
+Parameters can be set to ignore minor differences in coordinate values and
+to sort polytope vertices before comparison (ignoring polytope orientation.)
+

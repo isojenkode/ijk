@@ -1,0 +1,4 @@
+
+Print some information (number of active grid cubes, number of pos/neg
+isolated grid vertices, etc.) about isosurface without actually
+constructing the isosurface.

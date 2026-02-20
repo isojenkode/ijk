@@ -1,0 +1,12 @@
+
+Report information about a regular scalar grid.
+
+Report grid axes, number of grid vertices, edges, cubes, min/max scalar values,
+number of vertices with scalar value 0, etc.
+
+Also report local max of scalar frequencies, isosurface area, etc, as a function
+of the isovalue.
+
+Can be used to create histogram (table) of scalar frequencies, isosurface area, interval
+volume volume, gradients, etc. as a function of the isovalue.
+(Histograms can be plotted using gnuplot.)

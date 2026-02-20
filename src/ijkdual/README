@@ -1,0 +1,4 @@
+
+Dual contouring algorithm for isosurface generation.
+Creates a mesh of quadrilaterals or triangles (option -trimesh).
+
