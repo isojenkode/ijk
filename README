@@ -1,0 +1,9 @@
+Isosurface Jeneration Kode
+
+Programs for generating isosurfaces, including Marching Cubes and dual contouring.
+Also programs for information on scalar data sets (Teem nrrd format),
+for creating scalar data sets (Teem nrrd format), for information
+on meshes (Geomview .off format), and for manipulating and comparing
+geometric meshes (Geomview .off format).
+
+See src/README for more information on individual programs.
