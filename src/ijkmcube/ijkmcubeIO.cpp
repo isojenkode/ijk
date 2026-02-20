@@ -1050,7 +1050,7 @@ void IJKMCUBE::check_input
 {
   if (io_info.isotable_directory == "") {
     cerr << "Usage error.  Unknown isotable directory." << endl;
-    cerr << "  Use -dir {isotable_directory} argument or set environment variable IJK_ISOTABLE_DIR." << endl;
+    cerr << "  Use -isotable_dir {isotable_directory} argument or set environment variable IJK_ISOTABLE_DIR." << endl;
     exit(-1);
   }
 
