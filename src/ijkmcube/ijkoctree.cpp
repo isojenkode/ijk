@@ -1,7 +1,7 @@
 /*!
- *  @file ijkoctree.cxx
+ *  @file ijkoctree.cpp
  *  @brief Scalar grid octree
- *  - Version 0.6.0
+ *  - Version 0.6.1
  */
 
 

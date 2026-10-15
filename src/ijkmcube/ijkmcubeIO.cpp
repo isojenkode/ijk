@@ -7,7 +7,7 @@
 
 /*
   IJK: Isosurface Jeneration Kode
-  Copyright (C) 2009-2025 Rephael Wenger
+  Copyright (C) 2009-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -1075,19 +1075,6 @@ void IJKMCUBE::check_input
 
 
 // **************************************************
-// PATH_DELIMITER
-// **************************************************
-
-namespace {
-
-#ifdef _WIN32
-  const char PATH_DELIMITER = '\\';
-#else
-  const char PATH_DELIMITER = '/';
-#endif
-}
-
-// **************************************************
 // READ ISOSURFACE LOOKUP TABLE(S)
 // **************************************************
 
@@ -1190,8 +1177,10 @@ namespace {
   {
     filename = filename_str.prefix + filename_str.middle + 
       filename_str.suffix;
-    pathname = filename_str.pathname_prefix + filename;
+    namespace fs = std::filesystem;
 
+    fs::path full_path = fs::path(filename_str.pathname_prefix) / filename;
+    pathname = full_path.generic_string();
     isotable_file.open(pathname, ios::in);
   }
 
@@ -1221,8 +1210,8 @@ void IJKMCUBE::open_isotable_file
   if (flag_use_local_directory)
     { isotable_pathname_prefix = ""; }
   else
-    { isotable_pathname_prefix = isotable_directory + PATH_DELIMITER; }
-    
+    { isotable_pathname_prefix = isotable_directory; }
+  
   filename_str.prefix = filename_prefix;
   filename_str.suffix = filename_suffix;
   filename_str.pathname_prefix = isotable_pathname_prefix;
