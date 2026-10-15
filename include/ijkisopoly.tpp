@@ -2957,8 +2957,8 @@ namespace IJK {
     set_all_adjacent_grid_cubes
       (scalar_grid, isodual_table, isopoly_cube_loc,
        active_cube_list);
-    
-    split_non_manifold_isov_pairs
+
+    split_non_manifold_isov_pairs_using_adjacent
       (scalar_grid, isodual_table, active_cube_list, num_non_manifold_split);
 
     split_dual_isovert
@@ -3097,7 +3097,7 @@ namespace IJK {
       (scalar_grid, isodual_table, isopoly_cube_loc,
        active_cube_list);
 
-    split_non_manifold_isov_pairs
+    split_non_manifold_isov_pairs_using_adjacent
       (scalar_grid, isodual_table, active_cube_list, num_non_manifold_split);
 
     select_split_1_2_ambig

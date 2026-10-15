@@ -1,13 +1,13 @@
 /*!
  *  @file ijkcoord.tpp
  *  @brief ijk templates for coordinate arithmetic
- *  - Version 0.6.0
+ *  - Version 0.6.1
  */
 
 
 /*
   IJK: Isosurface Jeneration Kode
-  Copyright (C) 2009-2025 Rephael Wenger
+  Copyright (C) 2009-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -37,9 +37,9 @@
 
 namespace IJK {
 
-  // **************************************************
+  // *****************************************************************
   //! @name Basic coordinate operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -392,9 +392,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Vector operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -894,9 +894,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute angles
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -2166,9 +2166,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute dihedral angles
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -2277,9 +2277,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Distance/Length operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -2548,9 +2548,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Intersection operations
-  // **************************************************  
+  // *****************************************************************
 
   //@{
 
@@ -2605,9 +2605,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Average operations
-  // **************************************************  
+  // *****************************************************************
 
   //@{
 
@@ -2641,9 +2641,9 @@ namespace IJK {
   //@}
 
 
-  // **********************************************************
+  // *****************************************************************
   //! @name Compute centroid.
-  // **********************************************************
+  // *****************************************************************
 
   //@{
 
@@ -2782,9 +2782,174 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
+  //! @name Triangle metrics
+  // *****************************************************************
+
+  //@{
+
+  /*!
+   *  @brief Compute triangle area.
+   *  @param dimension Coordinate dimension (= number of coordinates.)
+   *  @param coord0[] Input coordinates.
+   *  @param coord1[] Input coordinates.
+   *  @param coord2[] Input coordinates.
+   *  @param[out] v01[] Vector from coord0[] to coord1[].
+   *  @param[out] v02[] Vector from coord0[] to coord2[].
+   *  @param[out] L01_squared Square of length of v01.
+   *  @param[out] L02_squared Square of length of v02.
+   *  @param[out] v01_dot_v02 Inner (dot) product of v01 and v02.
+   *  @param[out] area_squared Triangle area squared.
+   */
+  template <typename DTYPE, 
+            typename CTYPE0, typename CTYPE1, typename CTYPE2,
+            typename VCTYPE01, typename VCTYPE02,
+            typename LTYPE, typename ATYPE>
+  void compute_triangle_area_squared
+  (const DTYPE dimension,
+   const CTYPE0 coord0[], const CTYPE1 coord1[], const CTYPE2 coord2[],
+   VCTYPE01 v01[], VCTYPE02 v02[],
+   LTYPE & L01_squared, LTYPE & L02_squared,
+   LTYPE & v01_dot_v02, ATYPE & area_squared)
+  {
+    subtract_coord(dimension, coord1, coord0, v01);
+    subtract_coord(dimension, coord2, coord0, v02);
+
+    compute_sum_of_squares(dimension, v01, L01_squared);
+    compute_sum_of_squares(dimension, v02, L02_squared);
+
+    compute_inner_product(dimension, v01, v02, v01_dot_v02);
+
+    area_squared =
+      (L01_squared*L02_squared - (v01_dot_v02*v01_dot_v02))/4.0;
+  }
+
+  
+  /*!
+   *  @overload
+   *  @brief Compute triangle area. (Return only area_squared.)
+   *  - Version that returns only area squared.
+   *  @param dimension Coordinate dimension (= number of coordinates.)
+   *  @param coord0[] Input coordinates.
+   *  @param coord1[] Input coordinates.
+   *  @param coord2[] Input coordinates.
+   *  @param[out] area_squared Triangle area squared.
+   */
+  template <typename DTYPE, 
+            typename CTYPE0, typename CTYPE1, typename CTYPE2,
+            typename ATYPE>
+  void compute_triangle_area_squared
+  (const DTYPE dimension,
+   const CTYPE0 coord0[], const CTYPE1 coord1[], const CTYPE2 coord2[],
+   ATYPE & area_squared)
+  {
+    IJK::ARRAY<ATYPE> v01(dimension), v02(dimension);
+    ATYPE L01_squared, L02_squared, v01_dot_v02;
+
+    compute_triangle_area_squared
+      (dimension, coord0, coord1, coord2, v01.Ptr(), v02.Ptr(),
+       L01_squared, L02_squared, v01_dot_v02, area_squared);
+  }
+
+   
+  /*!
+   *  @brief Compute inradius/circumradius of a triangle.
+   *  @param dimension Coordinate dimension (= number of coordinates.)
+   *  @param coord0[] Input coordinates.
+   *  @param coord1[] Input coordinates.
+   *  @param coord2[] Input coordinates.
+   *  @param[out] perimeter Triangle perimeter.
+   *  @param[out] area_squared Triangle area squared.
+   *  @param[out] ratio Ratio of triangle inradius to circumradius.
+   */
+  template <typename DTYPE, 
+            typename CTYPE0, typename CTYPE1, typename CTYPE2,
+            typename PTYPE, typename ATYPE, typename RTYPE>
+  void compute_triangle_inradius_over_circumradius
+  (const DTYPE dimension,
+   const CTYPE0 coord0[], const CTYPE1 coord1[], const CTYPE2 coord2[],
+   PTYPE & perimeter, ATYPE & area_squared, RTYPE & ratio)
+  {
+    IJK::ARRAY<RTYPE> v01(dimension), v02(dimension);
+    ATYPE L01_squared, L02_squared, v01_dot_v02;
+    ATYPE L01, L02, L12;
+    
+    // Initialize.
+    ratio = 0.0;
+
+    compute_triangle_area_squared
+      (dimension, coord0, coord1, coord2, v01.Ptr(), v02.Ptr(),
+       L01_squared, L02_squared, v01_dot_v02, area_squared);
+
+    compute_distance(dimension,  coord1, coord2, L12);
+    L01 = std::sqrt(L01_squared);
+    L02 = std::sqrt(L02_squared);
+
+    perimeter = (L01+L02+L12);
+    const PTYPE semi_perimeter = perimeter/2.0;
+
+    const RTYPE denominator = semi_perimeter*L01*L02*L12;
+
+    if (denominator != 0.0) {
+      ratio = 4.0 * area_squared / denominator;
+    }
+
+    return;
+  }
+
+
+  /*!
+   *  @overload
+   *  @brief Compute inradius/circumradius of a triangle. (triangle_vert[] version.)
+   *  - Version whose argument is a list of triangle vertices.
+   *  @param triangle_vert[] Triangle vertices.
+   *    @precondition triangle_vert[] must be an array of length 3.
+   */
+  template <typename DTYPE, typename CTYPE, typename VTYPE,
+            typename PTYPE, typename ATYPE, typename RTYPE>
+  void compute_triangle_inradius_over_circumradius
+  (const DTYPE dimension, const CTYPE vertex_coord[],
+   const VTYPE triangle_vert[],
+   PTYPE & perimeter, ATYPE & area_squared, RTYPE & ratio)
+  {
+    const CTYPE * coord0 = vertex_coord + triangle_vert[0]*dimension;
+    const CTYPE * coord1 = vertex_coord + triangle_vert[1]*dimension;
+    const CTYPE * coord2 = vertex_coord + triangle_vert[2]*dimension;
+
+    compute_triangle_inradius_over_circumradius
+      (dimension, coord0, coord1, coord2,
+       perimeter, area_squared, ratio);
+  }
+
+
+  /*!
+   *  @overload
+   *  @brief Compute inradius/circumradius of a triangle. (Return only ratio.)
+   *  - Version whose argument is a list of triangle vertices.
+   *  - Version that returns only ratio.
+   *  @param triangle_vert[] Triangle vertices.
+   *    @precondition triangle_vert[] must be an array of length 3.
+   */
+  template <typename DTYPE, typename CTYPE, typename VTYPE,
+            typename RTYPE>
+  void compute_triangle_inradius_over_circumradius
+  (const DTYPE dimension, const CTYPE vertex_coord[],
+   const VTYPE triangle_vert[],
+   RTYPE & ratio)
+  {
+    RTYPE perimeter, area_squared;
+
+    compute_triangle_inradius_over_circumradius
+      (dimension, vertex_coord, triangle_vert,
+       perimeter, area_squared, ratio);
+  }
+    
+  //@}
+
+
+  // *****************************************************************
   //! @name Comparison operators
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -2945,9 +3110,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Rounding operators
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3080,9 +3245,10 @@ namespace IJK {
 
   //@}  
 
-  // **************************************************
+  
+  // *****************************************************************
   //! @name Clamp operator
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3115,9 +3281,10 @@ namespace IJK {
 
   //@}
 
-  // **************************************************
+  
+  // *****************************************************************
   // @name OLD DEPRECATED Comparison operators
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3141,9 +3308,10 @@ namespace IJK {
 
   //@}
 
-  // **************************************************
+  
+  // *****************************************************************
   //! @name Insert Coord in List
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3188,9 +3356,10 @@ namespace IJK {
 
   //@}
 
-  // **************************************************
+  
+  // *****************************************************************
   //! @name 2D vector operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3212,9 +3381,9 @@ namespace IJK {
   //@}
 
   
-  // **************************************************
+  // *****************************************************************
   //! @name 2D distances
-  // **************************************************
+  // *****************************************************************
 
   //@{
   
@@ -3243,9 +3412,9 @@ namespace IJK {
   //@}
   
   
-  // **************************************************
+  // *****************************************************************
   //! @name 3D versions
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3420,9 +3589,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name 3D vector operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3443,9 +3612,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name 3D distances
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3566,9 +3735,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name 2D and 3D Matrix operations
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -3798,9 +3967,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Jacobian Determinant (3D)
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -4583,9 +4752,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Jacobian Determinant Shape (3D)
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -4877,9 +5046,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name 3D intersections
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -4920,9 +5089,9 @@ namespace IJK {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name 3D cross product
-  // **************************************************
+  // *****************************************************************
 
   //@{
 

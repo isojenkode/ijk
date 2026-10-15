@@ -1,7 +1,7 @@
 /*!
  *  @file ijkmcubeIO.cpp
  *  @brief IO routines for ijkmcube.
- *  - Version 0.6.0
+ *  - Version 0.6.1
  */
 
 
@@ -41,9 +41,6 @@
 #include "ijkIO.tpp"
 #include "ijkgrid_nrrd.tpp"
 #include "ijkstring.tpp"
-
-// *** DEBUG ***
-#include "ijkprint.tpp"
 
 using namespace IJK;
 using namespace IJKMCUBE;
@@ -1048,12 +1045,6 @@ void IJKMCUBE::check_input
 (const IO_INFO & io_info, 
  const MC_SCALAR_GRID_BASE & scalar_grid)
 {
-  if (io_info.isotable_directory == "") {
-    cerr << "Usage error.  Unknown isotable directory." << endl;
-    cerr << "  Use -isotable_dir {isotable_directory} argument or set environment variable IJK_ISOTABLE_DIR." << endl;
-    exit(-1);
-  }
-
   if (io_info.flag_interval_volume) {
     // Construct interval volume
     if (io_info.isovalue.size() > 2 && io_info.flag_use_stdout) {
@@ -1321,6 +1312,7 @@ void IJKMCUBE::read_isosurface_table
 (const int dimension, const char * poly_name,
  const IO_INFO & io_info, ISOSURFACE_TABLE & isotable)
 {
+  const std::string isotable_directory = io_info.isotable_directory;
   std::string isotable_filename, isotable_pathname, isotable_pathnameB;
   std::vector<std::string> path_listA;
   std::vector<std::string> path_listB;
@@ -1328,22 +1320,36 @@ void IJKMCUBE::read_isosurface_table
   ifstream isotable_file;
 
   if (io_info.isotable_path == "") {
-    open_isotable_file
-      (dimension, poly_name, io_info, false,
-       isotable_filename, isotable_pathname, isotable_file,
-       path_listA);
 
-    if (!isotable_file) {
+    if (isotable_directory != "") {
+      open_isotable_file
+        (dimension, poly_name, io_info, false,
+         isotable_filename, isotable_pathname, isotable_file,
+         path_listA);
+    }
+
+    if ((isotable_directory == "") || !isotable_file) {
       isotable_file.clear();
       open_isotable_file
         (dimension, poly_name, io_info, true,
          isotable_filename, isotable_pathnameB, isotable_file,
          path_listB);
+
+      if ((isotable_directory != "") && isotable_file) {
+        cerr << "Warning: Using isosurface table from local directory," << endl
+             << "  not from \"" << isotable_directory << "\"." << endl;
+      }
     };
 
     if (!isotable_file) {
-      cerr << "Unable to find/open isosurface table file. Tried: "
-           << endl;
+      cerr << "Unable to find/open isosurface table file." << endl;
+      if (isotable_directory == "") {
+        cerr << "  Isosurface table directory is undefined." << endl;
+        cerr << "  Use \"-isotable_dir {isotable_directory}\" or set environment" << endl
+             << "  variable IJK_ISOTABLE_DIR to set the isosurface table directory, " << endl;
+        cerr << "  or copy isosurface table into local directory." << endl;
+      }
+      cerr << "Tried: " << endl;
       for (int i = 0; i < path_listA.size(); i++)
         {  cerr << "  " << path_listA[i] << endl; }
       for (int i = 0; i < path_listB.size(); i++)

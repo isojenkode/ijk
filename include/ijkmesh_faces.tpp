@@ -1,12 +1,12 @@
 /*!
  *  @file ijkmesh_faces.tpp
  *  @brief ijk templates for processing polyhedral meshes faces.
- * - Version 0.6.0
+ * - Version 0.6.1
  */
 
 /*
   IJK: Isosurface Jeneration Kode
-  Copyright (C) 2017-2025 Rephael Wenger
+  Copyright (C) 2017-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -531,14 +531,14 @@ namespace IJK {
 
     NTYPE j = 0;
     const VTYPE * endpoint_front = &(edge_endpoint.front());
-    while (j+1 < num_edges) {
+    while (j < num_edges) {
       NTYPE k = j+1;
-      NTYPE jf = index_sorted[j];
-      NTYPE kf = index_sorted[k];
-      while (k < num_edges && 
-             are_lists_equal(endpoint_front+2*jf, endpoint_front+2*kf, 2)) {
-        k++;
-        kf = index_sorted[k];
+      const NTYPE jf = index_sorted[j];
+      while (k < num_edges) {
+        const NTYPE kf = index_sorted[k];
+        if (!are_lists_equal
+            (endpoint_front+2*jf, endpoint_front+2*kf, 2)) { break; }
+        ++k;
       };
 
       NTYPE num_duplicate = k - j;

@@ -4,13 +4,13 @@
  *  - Input formats: Geomview .off.
  *  - Output formats: Geomview .off, OpenInventor .iv (3D), Fig .fig (2D)
  *    Stanford .ply, and Visualization Toolkit, .vtk.
- *  - Version 0.6.0
+ *  - Version 0.6.1
  */
 
 
 /*
   IJK: Isosurface Jeneration Kode
-  Copyright (C) 2011-2025 Rephael Wenger
+  Copyright (C) 2011-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -73,11 +73,24 @@ namespace IJK {
     (std::ostream & out, const int dim, const int numv, const int numf,
      const std::vector<std::string> & comment);
 
+    inline void ijkoutVNormPLYheader
+    (std::ostream & out, const int dim, const int numv, const int numf);
+    
+    inline void ijkoutVNormPLYheader
+    (std::ostream & out, const int dim, const int numv, const int numf,
+     const std::vector<std::string> & comment);
+    
     inline void ijkoutColorFacesPLYheader
     (std::ostream & out, const int dim, const int numv, const int nums);
 
     template <typename CTYPE> void ijkoutVertexCoord
-    (std::ostream & out, const int dim, const CTYPE * coord, const int numv);
+    (std::ostream & out, const int dim, const CTYPE *
+     coord, const int numv);
+
+    template <typename CTYPE, typename VCTYPE>
+    void ijkoutVertexCoordAndNormals
+    (std::ostream & out, const int dim,
+     const CTYPE * coord, const VCTYPE * normal, const int numv);
 
     template <typename CTYPE, typename COLOR_TYPE> 
     void ijkoutVertexCoordColor
@@ -2860,6 +2873,91 @@ namespace IJK {
       (out, num_poly_vert, poly_vert, first_poly_vert, num_poly);
   }
 
+
+  /*!
+   *  @brief Output .ply file of polytopes and vertex normals.
+   *  - Different polytopes may have different numbers of vertices.
+   *  - Normals are at vertices.
+   *  @param out Output stream.
+   *  @param dim Dimension of vertices.
+   *  @param coord Array of coordinates.
+   *         coord[dim*i+k] k'th coordinate of vertex i (k < dim).
+   */
+  template <typename CTYPE, typename VCTYPE, typename NTYPE,
+            typename VTYPE, typename ITYPE> 
+  void ijkoutPolyVNormPLY
+  (std::ostream & out, const int dim,
+   const CTYPE * coord, const VCTYPE * normal, const int numv,
+   const NTYPE * num_poly_vert, const VTYPE * poly_vert,
+   const ITYPE * first_poly_vert, const int num_poly)
+  {
+    IJK::PROCEDURE_ERROR error("ijkoutPolyVNormPLY");
+
+    if (dim != 3) {
+      error.AddMessage
+        ("Programming error.  Only dimension 3 implemented for .ply files.");
+      throw error;
+    }
+
+
+    ijkoutVNormPLYheader(out, dim, numv, num_poly);
+    ijkoutVertexCoordAndNormals(out, dim, coord, normal, numv);
+    ijkoutPolytopeVertices
+      (out, num_poly_vert, poly_vert, first_poly_vert, num_poly);
+  }
+
+
+  /*!
+   *  @overload
+   *  @brief Output .ply file of polytopes and vertex normals. (C++ STL vector.)
+   *  - C++ STL vector format for coord[], normal[].
+   */
+  template <typename CTYPE, typename VCTYPE, typename NTYPE,
+            typename VTYPE, typename ITYPE> 
+  void ijkoutPolyVNormPLY
+  (std::ostream & out, const int dim,
+   const std::vector<CTYPE> & coord, const std::vector<VCTYPE> & normal,
+   const NTYPE * num_poly_vert, const VTYPE * poly_vert,
+   const ITYPE * first_poly_vert, const int num_poly)
+  {
+    const int numv = coord.size()/dim;
+
+    if (coord.size() != normal.size()) {
+      IJK::PROCEDURE_ERROR error("ijkoutPolyVNormPLY");
+      error.AddMessage
+        ("Programming error. Number of normals does not equal number of vertices.");
+      throw error;
+    }
+
+    ijkoutPolyVNormPLY
+      (out, dim, vector2pointer(coord), vector2pointer(normal), numv,
+       num_poly_vert, poly_vert, first_poly_vert, num_poly);
+  }
+
+
+  /*!
+   *  @overload
+   *  @brief Output .ply file of polytopes and vertex normals. (C++ STL vector for poly.)
+   *  - C++ STL vector format for coord[], normal[],
+   *    num_poly_vert[], poly_vert, and first_poly_vert.
+   */
+  template <typename CTYPE, typename VCTYPE, typename NTYPE,
+            typename VTYPE, typename ITYPE> 
+  void ijkoutPolyVNormPLY
+  (std::ostream & out, const int dim,
+   const std::vector<CTYPE> & coord, const std::vector<VCTYPE> & normal,
+   const std::vector<NTYPE> & num_poly_vert,
+   const std::vector<VTYPE> & poly_vert,
+   const std::vector<ITYPE> & first_poly_vert,
+   const int num_poly)
+  {
+    ijkoutPolyVNormPLY
+      (out, dim, coord, normal, vector2pointer(num_poly_vert),
+       vector2pointer(poly_vert), vector2pointer(first_poly_vert),
+       num_poly);
+  }
+  
+
   //@}
 
 
@@ -4657,6 +4755,66 @@ namespace IJK {
 
 
     /*!
+     *  @brief Output .ply file header with normals at vertices.
+     *  @param out Output stream.
+     *  @param dim Dimension of vertices.
+     *  @param numv Number of vertices.
+     *  @param numf Number of faces.
+     *  @param comment Array of comments to be added to .ply file.
+     */
+    inline void ijkoutVNormPLYheader
+    (std::ostream & out, const int dim, const int numv, const int numf,
+     const std::vector<std::string> & comment)
+    {
+      IJK::PROCEDURE_ERROR error("ijkoutVNormPLYheader");
+
+      if (dim != 3) {
+        error.AddMessage
+          ("Programming error.  Only dimension 3 implemented for .ply files.");
+        throw error;
+      }
+
+      out << "ply" << std::endl;
+      out << "format ascii 1.0" << std::endl;
+
+      for (std::vector<std::string>::size_type i = 0;
+           i < comment.size(); i++) {
+        out << "comment " << comment[i] << std::endl;
+      }
+
+      out << "element vertex " << numv << std::endl;
+      out << "property float x" << std::endl;
+      out << "property float y" << std::endl;
+      out << "property float z" << std::endl;
+      out << "property float nx" << std::endl;
+      out << "property float ny" << std::endl;
+      out << "property float nz" << std::endl;      
+      out << "element face " << numf << std::endl;
+      out << "property list uchar int vertex_index" << std::endl;
+      out << "end_header" << std::endl;
+    }
+
+
+    /*!
+     *  @overload
+     *  @brief Output .ply file header with normals at vertices
+     *    (no comments).
+     *  - Version with no comments.
+     *  @param out Output stream.
+     *  @param dim Dimension of vertices.
+     *  @param numv Number of vertices.
+     *  @param numf Number of faces.
+     */
+    inline void ijkoutVNormPLYheader
+    (std::ostream & out, const int dim, const int numv, const int numf)
+    {
+      std::vector<std::string> comment;
+
+      ijkoutVNormPLYheader(out, dim, numv, numf, comment);
+    }
+    
+    
+    /*!
      *  @brief Output .ply file header with faces colored.
      *  @param out Output stream.
      *  @param dim Dimension of vertices.
@@ -4703,6 +4861,33 @@ namespace IJK {
       for (int iv = 0; iv < numv; iv++) {
         for (int d = 0; d < dim; d++) {
           out << coord[iv*dim + d];
+          if (d < dim-1) { out << " "; }
+          else { out << std::endl; };
+        }
+      }
+    }
+
+    
+    /*!
+     *  @brief Output vertex coordinates and vertex normals.
+     *  @param out Output stream.
+     *  @param dim Vertex dimension (number of vertex coordinates.)
+     *  @param coord[] Array of vertex coordinates.
+     *                 coord[dim*i+k] = k'th coordinate of vertex j  (k < dim).
+     *  @param numv Number of vertices.
+     */
+    template <typename CTYPE, typename VCTYPE>
+    void ijkoutVertexCoordAndNormals
+    (std::ostream & out, const int dim,
+     const CTYPE * coord, const VCTYPE * normal, const int numv)
+    {
+      for (int iv = 0; iv < numv; iv++) {
+        for (int d = 0; d < dim; d++) {
+          out << coord[iv*dim + d];
+          out << " ";
+        }
+        for (int d = 0; d < dim; d++) {
+          out << normal[iv*dim + d];
           if (d < dim-1) { out << " "; }
           else { out << std::endl; };
         }

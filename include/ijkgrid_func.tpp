@@ -1,13 +1,13 @@
 /*!
  *  @file ijkgrid_func.tpp
  *  @brief ijk templates defining regular grid functions.
- *  - Version 0.6.0
+ *  - Version 0.6.1
  */
 
 
 /*
   IJK: Isosurface Jeneration Kode
-  Copyright (C) 2008-2025 Rephael Wenger
+  Copyright (C) 2008-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -2452,8 +2452,7 @@ namespace IJK {
                          &(vlist[0]), num_subgrid_vertices);
 
     // remove iv from list
-    std::remove(vlist.begin(), vlist.end(), iv);
-    vlist.pop_back();
+    vlist.erase(std::remove(vlist.begin(), vlist.end(), iv), vlist.end());
   }
 
   
