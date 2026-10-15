@@ -1,12 +1,12 @@
 /*!
  *  @file ijkmeshinfo.cpp
  *  @brief Compute mesh information.
- *  - Version 0.4.1
+ *  - Version 0.6.1
  */
 
 /*
   IJK: Isosurface Jeneration Code
-  Copyright (C) 2008-2025 Rephael Wenger
+  Copyright (C) 2008-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -350,6 +350,9 @@ void output_min_polygon_edge_length_ratios
 void output_poly_with_min_max_edge_lengths
 (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,  
  const IO_INFO & io_info, const bool flag_internal_poly);
+void output_triangles_with_radius_ratio_le
+(const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord, 
+ const IO_INFO & io_info, const bool flag_internal_poly);
 void output_min_max_Jacobian_determinants
 (const MESH_DATA & mesh_data,
  const VERTEX_POLY_INCIDENCE_TYPE & vertex_poly_incidence,
@@ -419,7 +422,7 @@ typedef enum
    MINC_PARAM, MAXC_PARAM, MIN_NUMV_PARAM, MAX_NUMV_PARAM,
    ANGLE_LE_PARAM, ANGLE_GE_PARAM,
    FACET_ANGLE_LE_PARAM, FACET_ANGLE_GE_PARAM,
-   ELENGTH_RATIO_LE_PARAM,
+   ELENGTH_RATIO_LE_PARAM, RADIUS_RATIO_LE_PARAM,
    PJACOBIAN_PARAM, VJACOBIAN_PARAM,
    LIST_DUP_PARAM, 
    INTERNAL_POLY_PARAM, INTERNAL_VERT_PARAM, INTERNAL_EDGE_PARAM,
@@ -447,7 +450,7 @@ const char * parameter_string[] =
    "-minc", "-maxc", "-min_numv", "-max_numv",
    "-angle_le", "-angle_ge",
    "-facet_angle_le", "-facet_angle_ge",
-   "-elength_ratio_le",
+   "-elength_ratio_le", "-radius_ratio_le",
    "-pJacobian", "-vJacobian",
    "-list_dup", "-internal", "-internal_vert", "-internal_edge",
    "-report_deep", "-out_values", "-out_min_angle", "-out_max_angle",
@@ -777,8 +780,10 @@ int main(int argc, char **argv)
          plist_vcoord_flag);
       output_poly_edge_length_ratios
         (mesh_data, vertex_coord, io_info, flag_internal_poly, 
-         plist_vcoord_flag);
+         plist_vcoord_flag);      
       output_poly_with_min_max_edge_lengths
+        (mesh_data, vertex_coord, io_info, flag_internal_poly);
+      output_triangles_with_radius_ratio_le
         (mesh_data, vertex_coord, io_info, flag_internal_poly);
       output_poly_with_min_max_Jacobian_determinants
         (mesh_data, vertex_coord, io_info, flag_internal_poly);
@@ -1043,12 +1048,14 @@ void output_general_info
   cout << "Volume dimension: " << dimension << endl;
   cout << "Mesh dimension: " << mesh_dimension << endl;
   cout << "Number of mesh vertices: " << num_vertices << endl;
+  
   if (flag_internal_vert) {
     const int num_internal_vertices = 
       count_num_internal_vertices(mesh_data.vertex_data);
     cout << "Number of internal mesh vertices: " 
          << num_internal_vertices << endl;
   }
+  
   if (flag_polyfile) {
     if (mesh_dimension <= DIM2) {
       cout << "Number of mesh polygons: " << num_poly << endl;
@@ -1137,7 +1144,25 @@ void output_general_info
   io_info.flag_output_min_edge_length_ratio = true;
   output_min_edge_length_ratios
     (mesh_data, vertex_coord, io_info, false, false, flag_terse);
+  if (flag_internal_poly) {
+    output_min_edge_length_ratios
+      (mesh_data, vertex_coord, io_info, true, false, flag_terse);
+  }
 
+  if (mesh_dimension == DIM2) {
+    const int num_triangles = polymesh.CountNumOfTriangles();
+    if (num_triangles == num_poly) {
+      io_info.flag_output_min_triangle_inradius_over_circumradius = true;
+      // All polygons are triangles.
+      output_min_triangle_inradius_over_circumradius
+        (mesh_data, vertex_coord, io_info, false, flag_terse);
+      if (flag_internal_poly) {
+        output_min_triangle_inradius_over_circumradius
+          (mesh_data, vertex_coord, io_info, true, flag_terse);
+      }
+    }
+  }
+  
   io_info.flag_output_min_Jacobian_determinant = true;
   io_info.flag_output_max_Jacobian_determinant = true;
   output_min_max_Jacobian_determinants
@@ -1477,7 +1502,7 @@ void output_min_edge_length_ratios
 }
 
 
-// Output polytopes with min/max angles or angles less then and equal to
+// Output polytopes with edge length ratios less then and equal to
 //   or greater than and equal to given bounds.
 void output_poly_edge_length_ratios
 (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord, 
@@ -1502,6 +1527,37 @@ void output_poly_edge_length_ratios
       output_polygons_with_small_edge_length_ratios
         (mesh_data, vertex_coord, flag_internal_poly, 
          io_info.edge_length_ratio_le.Value());
+    }
+
+  }
+
+}
+
+
+// Output triangles with inradius over circumradius less then
+//   or equal to given bounds.
+void output_triangles_with_radius_ratio_le
+(const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord, 
+ const IO_INFO & io_info, const bool flag_internal_poly)
+{
+  const int dimension = mesh_data.dimension;
+  const int mesh_dimension = mesh_data.mesh_dimension;
+  IJK::PROCEDURE_ERROR error("ouput_triangles_with_radius_ratio_le");
+
+  if (flag_internal_poly &&
+      !mesh_data.are_boundary_facets_identified) {
+    error.AddMessage
+      ("Programming error.  Boundary facets not identified but");
+    error.AddMessage
+      ("  internal poly flag is set to true.");
+    throw error;
+  }
+
+  if (io_info.inradius_over_circumradius_le.IsSet()) {
+    if (mesh_dimension == DIM2) {
+      output_triangles_with_small_inradius_over_circumradius
+        (mesh_data, vertex_coord, flag_internal_poly, 
+         io_info.inradius_over_circumradius_le.Value());
     }
 
   }
@@ -5703,6 +5759,13 @@ void parse_command_line(int argc, char **argv)
         io_info.edge_length_ratio_le.Set(x);
         break;
 
+      case RADIUS_RATIO_LE_PARAM:
+        iarg++;
+        if (iarg >= argc) usage_error();
+        sscanf(argv[iarg], "%f", &x);
+        io_info.inradius_over_circumradius_le.Set(x);
+        break;        
+
       case PJACOBIAN_PARAM:
         io_info.flag_pJacobian.Set(true);
         break;
@@ -5895,6 +5958,7 @@ void parse_command_line(int argc, char **argv)
       (io_info.angle_le.size() == 0) && (io_info.angle_ge.size() == 0) &&
       !io_info.facet_angle_le.IsSet() && !io_info.facet_angle_ge.IsSet() &&
       !io_info.edge_length_ratio_le.IsSet() &&
+      !io_info.inradius_over_circumradius_le.IsSet() &&
       !io_info.flag_output_min_edge_length && 
       !io_info.flag_output_max_edge_length &&
       !io_info.flag_output_min_Jacobian_determinant &&

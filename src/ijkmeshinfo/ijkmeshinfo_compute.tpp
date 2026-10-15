@@ -1,12 +1,12 @@
 /*!
  *  @file ijkmeshinfo_compute.tpp
  *  @brief Templates for computing angles, edge lengths, etc.
- *  - Version 0.4.0
+ *  - Version 0.6.1
  */
 
 /*
   IJK: Isosurface Jeneration Code
-  Copyright (C) 2017-2024 Rephael Wenger
+  Copyright (C) 2017-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -31,10 +31,12 @@
 
 namespace IJKMESHINFO {
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute values for each polytope.
-  // **************************************************
+  // *****************************************************************
 
+  //@{
+  
   /// Compute the minimum and maximum values for each polytope in polymesh.
   template <typename MDATA_TYPE, typename CTYPE,
             typename MINVAL_TYPE0, typename MAXVAL_TYPE0, 
@@ -345,11 +347,84 @@ namespace IJKMESHINFO {
 
   }
 
+  //@}
 
-  // **************************************************
+}
+
+
+  // *****************************************************************
+  //! @name Compute values for each triangle.
+  // *****************************************************************
+
+namespace IJKMESHINFO {
+    
+  //@{
+
+
+  /*!
+   *  @brief Compute the minimum values over all triangles in polymesh.
+   *  - Skip any polygons that are not triangles.
+   *  @param min_value Minimum value returned by compute_triangle_value.
+   *    - Set to min_init if no triangle in mesh.
+   *  @param itriangle_with_min_value Index of triangle with minimum value.
+   *    - Set to 0 if no triangles in mesh.
+   */
+  template <typename MDATA_TYPE, typename CTYPE,
+            typename MINVAL_TYPE0, typename MINVAL_TYPE1,
+            typename IPOLY_TYPE, typename VTYPE>
+  void compute_min_triangle_list_values
+  (const MDATA_TYPE & mesh_data,
+   const COORD_TYPE * vertex_coord, const bool flag_internal,
+   const MINVAL_TYPE0 min_init, MINVAL_TYPE1 & min_value,
+   IPOLY_TYPE & itriangle_with_min_value,
+   void compute_triangle_value
+   (const MDATA_TYPE &, const VTYPE *, const CTYPE *, MINVAL_TYPE1 &))
+  {
+    const int NUM_VERT_PER_TRIANGLE(3);
+    min_value = min_init;
+    itriangle_with_min_value = 0;
+
+    if (flag_internal) {
+      IJK::PROCEDURE_ERROR error("compute_min_triangle_list_values");
+      if (!check_boundary_facets(mesh_data, error)) { throw error; } 
+    }
+
+    bool is_set(false);
+    for (int ipoly = 0; ipoly < mesh_data.NumPoly(); ipoly++) {
+
+      if (mesh_data.NumPolyVert(ipoly) != NUM_VERT_PER_TRIANGLE)
+        { continue; }
+      
+      if (mesh_data.poly_data[ipoly].IsDegenerate()) { continue; }
+
+      if (flag_internal) {
+        if (mesh_data.poly_data[ipoly].ContainsBoundaryFacet()) 
+          { continue; } 
+      }
+
+      const IPOLY_TYPE * vertex_list = mesh_data.VertexList(ipoly);
+      MINVAL_TYPE1 value_i;
+      compute_triangle_value
+        (mesh_data, vertex_coord, vertex_list, value_i);
+
+      if (!is_set || value_i < min_value) { 
+        min_value = value_i; 
+        itriangle_with_min_value = ipoly;
+      }
+
+      is_set = true;
+    }
+
+  }
+
+  //@}
+  
+
+  // *****************************************************************
   //! @name Compute values for each vertex.
-  // **************************************************
+  // *****************************************************************
 
+  //@{
 
   /// Compute the minimum and maximum values for each vertex in polymesh.
   template <typename MDATA_TYPE,
@@ -419,6 +494,8 @@ namespace IJKMESHINFO {
     }
 
   }
+
+  //@}
 
 }
 

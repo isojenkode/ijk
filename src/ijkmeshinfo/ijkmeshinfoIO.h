@@ -1,13 +1,13 @@
 /*!
  *  @file ijkmeshinfoIO.h
  *  @brief IO routines for ijkmeshinfo.
- *  - Version 0.4.1
+ *  - Version 0.6.1
  */
 
 
 /*
   IJK: Isosurface Jeneration Code
-  Copyright (C) 2017-2025 Rephael Wenger
+  Copyright (C) 2017-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -37,9 +37,9 @@
 namespace IJKMESHINFO {
 
 
-  // **************************************************
+  // *******************************************************************
   // Class IO_INFO
-  // **************************************************
+  // *******************************************************************
 
   /// Information controlling input and output.
   class IO_INFO {
@@ -50,20 +50,27 @@ namespace IJKMESHINFO {
 
   public:
 
-    /// Output values less than or equal to angle_le[i].
+    /// Output poly with angles less than or equal to angle_le[i].
     std::vector<ANGLE_TYPE> angle_le;
 
-    /// Output values greater than or equal to angle_ge[i].
+    /// Output poly with angles greater than or equal to angle_ge[i].
     std::vector<ANGLE_TYPE> angle_ge;
 
-    /// Output values less than or equal to facet_angle_le.Value().
+    /// Output poly with facet angles less than or equal
+    ///  to facet_angle_le.Value().
     IJK::SET_VALUE<ANGLE_TYPE> facet_angle_le;
 
-    /// Output values less than or equal to facet_angle_ge.Value().
+    /// Output poly with facet angles greater than or equal
+    ///   to facet_angle_ge.Value().
     IJK::SET_VALUE<ANGLE_TYPE> facet_angle_ge;
 
-    /// Output values less than or equal to edge_length_ratio_le.Value().
-    IJK::SET_VALUE<ANGLE_TYPE> edge_length_ratio_le;
+    /// Output poly with edge length ratios less than or equal
+    ///   to edge_length_ratio_le.Value().
+    IJK::SET_VALUE<COORD_TYPE> edge_length_ratio_le;
+
+    /// Output triangles with (inradius/circumradius) less than or equal
+    ///   to inradius_over_circumradius_le.Value().
+    IJK::SET_VALUE<COORD_TYPE> inradius_over_circumradius_le;
 
     /// Limit on number of polytopes in output list.
     int max_num_poly_out;
@@ -83,6 +90,9 @@ namespace IJKMESHINFO {
     /// If true, output min ratio of min to max edge length in cell.
     bool flag_output_min_edge_length_ratio;
 
+    /// If true, output min inradius over circumradius over all triangles.
+    bool flag_output_min_triangle_inradius_over_circumradius;;
+    
     /// If true, output min of the Jacobian determinants.
     bool flag_output_min_Jacobian_determinant;
 
@@ -117,23 +127,23 @@ namespace IJKMESHINFO {
 
   public:
     /// Constructor
-    IO_INFO():edge_length_ratio_le(0),
+    IO_INFO():edge_length_ratio_le(0), inradius_over_circumradius_le(0.5),
               flag_vJacobian(false),flag_pJacobian(true)
     { Init(); };
   };
 
 
-  // **************************************************
+  // *******************************************************************
   // POLYGON/POLYTOPE NAME ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   void get_polygon_name
   (const int num_polygon_edges, std::string & polygon_name);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   /// @brief Output vertices of polytope ipoly.
   void output_poly_vertices
@@ -187,9 +197,9 @@ namespace IJKMESHINFO {
    const COORD_TYPE vertex_coord[]);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT POLYGON ANGLE ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   /// Output the minimum and maximum angles of a set of polygons.
   void output_min_max_polygon_angle
@@ -239,9 +249,9 @@ namespace IJKMESHINFO {
    const bool flag_internal, const std::vector<ANGLE_TYPE> & angle_bound);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT TETRAHEDRA FACET ANGLE ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   /// Output the minimum and maximum angles of the set of triangles
   ///   which are the tetrahedra facets.
@@ -281,9 +291,9 @@ namespace IJKMESHINFO {
    const bool flag_internal, const ANGLE_TYPE angle_bound);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT DIHEDRAL ANGLE ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   void output_min_max_dihedral_angle
   (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
@@ -333,9 +343,9 @@ namespace IJKMESHINFO {
    const bool flag_internal, const std::vector<ANGLE_TYPE> & angle_bound);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT EDGE LENGTH ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   /// Output min/max lengths of edges in array mesh_data.edge_data.
   void output_min_max_edge_lengths_using_edge_list
@@ -400,9 +410,9 @@ namespace IJKMESHINFO {
    const IO_INFO & io_info, const bool flag_internal);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT EDGE LENGTH RATIO ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   /// Output minimum polygon edge length ratios.
   void output_min_polygon_edge_length_ratios
@@ -411,15 +421,31 @@ namespace IJKMESHINFO {
    const bool flag_internal, const bool terse_flag,
    const int num_poly_edges);
 
-  // Output polygons with small ratios of shortest to longest edge lengths.
+  /// Output polygons with small ratios of shortest to longest edge lengths.
   void output_polygons_with_small_edge_length_ratios
   (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord, 
    const bool flag_internal, const COORD_TYPE ratio_bound);
 
 
-  // **************************************************
+  // *******************************************************************
+  // OUTPUT INRADIUS OVER CIRCUMRADIUS ROUTINES
+  // *******************************************************************
+
+  /// Output triangles with small inradius over circumradius.
+  void output_min_triangle_inradius_over_circumradius
+  (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
+   const IO_INFO & io_info,
+   const bool flag_internal, const bool flag_terse);
+
+  /// Output triangles with small inradius over circumradius.
+  void output_triangles_with_small_inradius_over_circumradius
+  (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord, 
+   const bool flag_internal, const COORD_TYPE ratio_bound);
+  
+
+  // *******************************************************************
   // OUTPUT JACOBIAN ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   void output_min_max_hexahedra_Jacobian_determinants
   (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
@@ -498,9 +524,9 @@ namespace IJKMESHINFO {
    const bool flag_internal_vertex);
 
 
-  // **************************************************
+  // *******************************************************************
   // OUTPUT SHAPE METRIC BASED ON JACOBIAN MATRICES
-  // **************************************************
+  // *******************************************************************
 
   void output_min_max_hexahedra_Jacobian_shape
   (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
@@ -538,9 +564,9 @@ namespace IJKMESHINFO {
    const bool flag_internal_vertex);
 
 
-  // **************************************************
+  // *******************************************************************
   // PRINT ROUTINES
-  // **************************************************
+  // *******************************************************************
 
   void print_poly_index_and_vert
   (std::ostream & out, 
@@ -548,9 +574,9 @@ namespace IJKMESHINFO {
    const POLYMESH_TYPE & polymesh, const int ipoly);
 
 
-  // **************************************************
+  // *******************************************************************
   // USAGE/HELP MESSAGES
-  // **************************************************
+  // *******************************************************************
 
   void usage_msg();
   void usage_error();

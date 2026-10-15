@@ -1,12 +1,12 @@
 /*!
  *  @file ijkmeshinfo_compute.cpp
  *  @brief Compute angles, edge lengths, etc.
- *  - Version 0.4.0
+ *  - Version 0.6.1
  */
 
 /*
   IJK: Isosurface Jeneration Code
-  Copyright (C) 2017-2024 Rephael Wenger
+  Copyright (C) 2017-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -34,9 +34,9 @@
 #include "ijkmeshinfo_compute.tpp"
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE ANGLE ROUTINES
-// **************************************************
+// *******************************************************************
 
 // Compute min/max polygon angles.
 // @param flag_internal If true, compute angles for interior polygons.
@@ -292,6 +292,7 @@ void IJKMESHINFO::compute_num_tetmesh_dihedral_angles
 }
 
 
+// *** CODING ERROR ***
 // Compute cosine of min/max angle over all tetrahedron facets.
 void IJKMESHINFO::compute_cos_min_max_tetrahedron_facet_angles
 (const int dimension,
@@ -319,7 +320,8 @@ void IJKMESHINFO::compute_cos_min_max_tetrahedron_facet_angles
     double cos_angle;
     bool flag_duplicate_point;
 
-    // Compute min/max angles of triangle (iv0, iv1, iv3).
+    // *** CODING ERROR. DOES NOT ITERATE OVER ALL TRIANGLE VERTICES ***
+    // Compute min/max angles of triangle (iv0, iv1, iv2).
     IJK::compute_cos_triangle_angle_coord_list
       (dimension, vertex_coord, iv0, iv1, iv2, cos_angle, 
        flag_duplicate_point);
@@ -469,9 +471,9 @@ void IJKMESHINFO::compute_num_tetrahedra_facet_angles
 }
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE DIHEDRAL ANGLE ROUTINES
-// **************************************************
+// *******************************************************************
 
 // Compute min/max dihedral angles of tetrahedra.
 void IJKMESHINFO::compute_min_max_tetmesh_dihedral_angles
@@ -563,10 +565,9 @@ void IJKMESHINFO::compute_min_max_tetrahedron_dihedral_angles
 }
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE EDGE LENGTH ROUTINES
-// **************************************************
-
+// *******************************************************************
 
 // Compute edge length of edge ie.
 void IJKMESHINFO::compute_edge_length
@@ -964,9 +965,9 @@ void IJKMESHINFO::compute_min_max_hexahedron_edge_lengths
 }
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE EDGE LENGTH RATIO ROUTINES
-// **************************************************
+// *******************************************************************
 
 // Compute ratio of shortest to largest edge in a single polygon.
 void IJKMESHINFO::compute_polygon_edge_length_ratio
@@ -1008,6 +1009,7 @@ void IJKMESHINFO::compute_polygon_edge_length_ratio
     (dimension, poly_vert, num_vert, vertex_coord,
      edge_length_ratio, num_lengths);
 }
+
 
 // Compute min edge length ratios of polygons.
 void IJKMESHINFO::compute_min_polygon_edge_length_ratios
@@ -1096,9 +1098,80 @@ void IJKMESHINFO::compute_num_polygons_with_small_edge_length_ratios
 }
 
 
-// **************************************************
+// *******************************************************************
+// COMPUTE TRIANGLE INCIRCLE RADIUS OVER CIRCUMCIRCLE RADIUS
+// *******************************************************************
+
+// Compute inradius over circumradius.
+void IJKMESHINFO::compute_triangle_inradius_over_circumradius
+(const MESH_DATA & mesh_data,
+ const COORD_TYPE * vertex_coord,
+ const VERTEX_INDEX triangle_vert[],
+ COORD_TYPE & ratio)
+{
+  const int dimension = mesh_data.dimension;
+
+  IJK::compute_triangle_inradius_over_circumradius
+    (dimension, vertex_coord, triangle_vert, ratio);
+}
+
+
+// Compute minimum inradius over circumradius over all polygons.
+void IJKMESHINFO::compute_min_triangle_inradius_over_circumradius
+(const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
+ const bool flag_internal,
+ COORD_TYPE & min_ratio, int & itriangle_with_min_ratio)
+{
+  compute_min_triangle_list_values
+    (mesh_data, vertex_coord, flag_internal, 0, min_ratio,
+     itriangle_with_min_ratio,
+     IJKMESHINFO::compute_triangle_inradius_over_circumradius);
+}
+
+
+// Compute number of triangles with (inradius/circumradius) at most
+//   max_inradius_over_circumradius.
+void IJKMESHINFO::compute_num_triangles_with_small_inradius_over_circumradius
+(const int dimension,
+ const POLYMESH_TYPE & polymesh,
+ const std::vector<POLY_DATA> & poly_data,
+ const COORD_TYPE * vertex_coord,
+ const bool flag_internal, 
+ const COORD_TYPE ratio_bound, 
+ int & num_le)
+{
+  const int NUM_VERT_PER_TRIANGLE(3);
+  
+  // Initialize to zero.
+  num_le = 0;
+
+  for (int ipoly = 0; ipoly < polymesh.NumPoly(); ipoly++) {
+
+    if (flag_internal) {
+      if (poly_data[ipoly].ContainsBoundaryFacet()) 
+        { continue; } 
+    }
+
+    COORD_TYPE ratio;
+    int num_lengths;
+    const int * pvert = polymesh.VertexList(ipoly);
+    const int num_poly_vert = polymesh.NumPolyVert(ipoly);
+    if (num_poly_vert == NUM_VERT_PER_TRIANGLE) {
+      IJK::compute_triangle_inradius_over_circumradius
+        (dimension, vertex_coord, pvert, ratio);
+
+      if (ratio <= ratio_bound) {
+        num_le++;
+      }
+    }
+  }
+
+}
+
+
+// *******************************************************************
 // COMPUTE JACOBIAN DETERMINANTS
-// **************************************************
+// *******************************************************************
 
 // Compute min/max Jacobian matrix determinants of hexahedra.
 void IJKMESHINFO::compute_min_max_hexahedra_Jacobian_determinants
@@ -1275,9 +1348,9 @@ void IJKMESHINFO::compute_min_max_hex_vert_Jacobian_determinants
 }
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE NORMALIZED JACOBIAN DETERMINANTS
-// **************************************************
+// *******************************************************************
 
 // Compute min/max normalized Jacobian matrix determinants of hexahedra.
 void IJKMESHINFO::compute_min_max_hexahedra_normalized_Jacobian_determinants
@@ -1490,9 +1563,10 @@ void IJKMESHINFO::compute_min_max_hex_vert_normalized_Jacobian_determinants
 }
 
 
-// **************************************************
+
+// *******************************************************************
 // COMPUTE SHAPE METRIC BASED ON JACOBIAN MATRICES
-// **************************************************
+// *******************************************************************
 
 // Compute min/max hexahedra shape metric based on Jacobian matrices.
 void IJKMESHINFO::compute_min_max_hexahedra_Jacobian_shape
@@ -1700,9 +1774,9 @@ void IJKMESHINFO::compute_min_max_hex_vert_Jacobian_shape
 }
 
 
-// **************************************************
+// *******************************************************************
 // INTERSECT POLYTOPES
-// **************************************************
+// *******************************************************************
 
 // Compute min/max coordinates of triangle vertices.
 void IJKMESHINFO::compute_min_max_coord
@@ -2031,10 +2105,9 @@ bool IJKMESHINFO::intersect_triangle_triangle
 }
 
 
-// **************************************************
+// *******************************************************************
 // COMPUTE MESH SELF INTERSECTIONS
-// **************************************************
-
+// *******************************************************************
 
 // Compute self intersections of triangle mesh. Simple (O(n^2)) algorithm.
 // - Triangle mesh is embedded in R3.

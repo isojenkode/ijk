@@ -1,13 +1,13 @@
 /*!
  *  @file ijkmeshinfo_compute.h
  *  @brief Compute angles, edge lengths, Jacobian determinants, etc.
- *  - Version 0.4.0
+ *  - Version 0.6.1
  */
 
 
 /*
   IJK: Isosurface Jeneration Code
-  Copyright (C) 2017-2024 Rephael Wenger
+  Copyright (C) 2017-2026 Rephael Wenger
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public License
@@ -31,9 +31,9 @@
 
 namespace IJKMESHINFO {
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute angle routines
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -197,9 +197,9 @@ namespace IJKMESHINFO {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute dihedral angle routines
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -251,9 +251,9 @@ namespace IJKMESHINFO {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute edge length routines
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -370,9 +370,9 @@ namespace IJKMESHINFO {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute edge length ratio routines
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -384,8 +384,12 @@ namespace IJKMESHINFO {
    COORD_TYPE & edge_length_ratio,
    int & num_lengths);
 
-  /// @brief Compute ratio of shortest to largest edge in a single polygon.
-  /// - Version using MESH_DATA.
+  /*!
+   *  @overload
+   *  @brief Compute ratio of shortest to largest edge in a single polygon.
+   *    (Class MESH_DATA.)
+   *  - Version using MESH_DATA.
+   */
   void compute_polygon_edge_length_ratio
   (const MESH_DATA & mesh_data, 
    const VERTEX_INDEX poly_vert[], const int num_vert,
@@ -426,10 +430,45 @@ namespace IJKMESHINFO {
 
   //@}
 
+
+  // *****************************************************************
+  //! @name Compute triangle inradius/circumradius.
+  // *****************************************************************
+
+  //@{
+
+  /*!
+   *  @brief Compute inradius/circumradius of a triangle.
+   */
+  void compute_triangle_inradius_over_circumradius
+  (const MESH_DATA & mesh_data, 
+   const COORD_TYPE * vertex_coord,
+   const VERTEX_INDEX triangle_vert[],
+   COORD_TYPE & ratio);
+
+  /// Compute minimum inradius over circumradius over all triangles.
+  void compute_min_triangle_inradius_over_circumradius
+  (const MESH_DATA & mesh_data, const COORD_TYPE * vertex_coord,
+   const bool flag_internal,
+   COORD_TYPE & min_ratio, int & triangle_with_min_ratio);
+
+  // Compute number of triangles with (inradius/circumradius) at most
+  //   max_inradius_over_circumradius.
+  void compute_num_triangles_with_small_inradius_over_circumradius
+  (const int dimension,
+   const POLYMESH_TYPE & polymesh,
+   const std::vector<POLY_DATA> & poly_data,
+   const COORD_TYPE * vertex_coord,
+   const bool flag_internal, 
+   const COORD_TYPE ratio_bound, 
+   int & num_le);
   
-  // **************************************************
+  //@}
+  
+  
+  // *****************************************************************
   //! @name Compute Jacobian determinants
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -507,9 +546,9 @@ namespace IJKMESHINFO {
   //@}
 
 
-  // **************************************************
+  // *****************************************************************
   //! @name Compute normalized Jacobian determinants
-  // **************************************************
+  // *****************************************************************
 
   //@{
 
@@ -616,9 +655,9 @@ namespace IJKMESHINFO {
   //@}
   
 
-  // ***********************************************************************
+  // *****************************************************************
   //! @name Compute shape metrics based on Jacobian matrices.
-  // ***********************************************************************
+  // *****************************************************************
 
   //@{
   
@@ -701,9 +740,9 @@ namespace IJKMESHINFO {
   //@}
 
 
-  // ***********************************************************************
+  // *****************************************************************
   //! @name Compute polytope intersections.
-  // ***********************************************************************
+  // *****************************************************************
 
   //@{
 
@@ -803,9 +842,9 @@ namespace IJKMESHINFO {
   //@}
 
   
-  // ***********************************************************************
+  // *****************************************************************
   //! @name Compute mesh self intersections.
-  // ***********************************************************************
+  // *****************************************************************
 
   //@{
 
